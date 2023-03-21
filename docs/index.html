@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>BUA 345 - Lecture 16</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Penelope Pooler Eisenbies" />
+    <meta name="date" content="2023-03-21" />
+    <script src="docs_files/header-attrs/header-attrs.js"></script>
+    <link href="docs_files/panelset/panelset.css" rel="stylesheet" />
+    <script src="docs_files/panelset/panelset.js"></script>
+    <link href="docs_files/tile-view/tile-view.css" rel="stylesheet" />
+    <script src="docs_files/tile-view/tile-view.js"></script>
+    <script src="docs_files/xaringanExtra_fit-screen/fit-screen.js"></script>
+    <link href="docs_files/tachyons/tachyons.min.css" rel="stylesheet" />
+    <link href="docs_files/animate.css/animate.xaringan.css" rel="stylesheet" />
+    <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+background-image: url("docs_files/images/sloth_faded.png")
+background-size: cover
+
+class: bottom, right
+
+## BUA 345 - Lecture 16
+
+### Model Selection - Part 3
+
+&lt;br&gt;
+
+
+#### Penelope Pooler Eisenbies
+
+#### 2023-03-21
+
+[Wikipedia Sloth Page](https://en.wikipedia.org/wiki/Sloth)
+
+---
+
+### Upcoming Dates
+
+.pull-left[
+
+- Today's Lecture (3/21) is the third and final lecture on model and variable selection.
+
+- **HW 7 was due on Monday, 3/20**. 
+
+   - Grace Period is extended until Wednesday 3/22 at midnight, because of Spring Break.
+   
+- **HW 8 is now posted and is due Monday, 3/27**
+
+  - Part 1 pertains to Lectures 15 and 16 (today's lecture)
+    
+  - Part 2 pertains to Lecture 17
+  
+- **Quiz 2 is Thursday, March 30th**
+
+  - Practice Questions will be posted by Friday
+
+]
+
+.pull-right[
+
+&lt;img src="docs_files/images/owl.png" width="304" /&gt;
+
+]
+
+---
+
+### Getting Started with Markdown (Updated)
+
+.pull-left[
+
+- Download Zipped R project 
+
+- Open Zipped folder and copy internal folder (R Project) to a BUA 345 folder on your computer NOT IN DOWLOADS
+
+- **Open R Project:**
+  
+  - *OPTION 1:* Click on .Rproj file to open project and RStudio
+
+  - *OPTION 2:* Open RStudio, then click File &gt; Open Project &gt; then navigate to  and click on .Rproj file.
+  
+
+- **Once Project is opened in RStudio:**
+
+  - Click on `code_data_output` file to open it.
+
+  - Click on `BUA_345_Lecture_16.Rmd` to open it.
+
+  - Run `setup` Chunk
+
+
+]
+
+.pull-right[
+
+&lt;img src="docs_files/images/beaver.png" width="320" /&gt;
+
+]
+
+---
+
+### Setup
+
+.pull-left[
+
+- The setup chunk shows the packages needed for this demo.   
+
+- R will install specified packages if needed (only required once after R is installed)  
+
+- R will load specified packaged (required every time you start a new R session)  
+
+- The first time you run this code, R will install these packages which will be slow.  
+
+- **If you get warnings, that's okay.**  
+
+- If you get **error messages**, I (or TA), can help you.
+
+]
+
+
+.pull-right[
+
+&lt;img src="docs_files/images/owl.png" width="304" /&gt;
+
+]
+
+
+---
+
+### Setup Chunk for Lecture 16
+
+
+```r
+# this line specifies options for default options for all R Chunks
+knitr::opts_chunk$set(echo=T, highlight=T)
+# suppress scientific notation
+options(scipen=100)
+
+# install helper package that loads and installs other packages, if needed
+if (!require("pacman")) install.packages("pacman", repos = "http://lib.stat.cmu.edu/R/CRAN/")
+
+# install and load required packages
+pacman::p_load(pacman,tidyverse, magrittr, olsrr, gridExtra, ggiraphExtra, knitr, viridis)
+
+# verify packages
+p_loaded()
+```
+
+```
+##  [1] "xaringanthemer" "viridis"        "viridisLite"    "knitr"         
+##  [5] "ggiraphExtra"   "gridExtra"      "olsrr"          "magrittr"      
+##  [9] "forcats"        "stringr"        "dplyr"          "purrr"         
+## [13] "readr"          "tidyr"          "tibble"         "ggplot2"       
+## [17] "tidyverse"      "pacman"
+```
+
+**NOTES:
+
+- ** Don't worry about `xaringanthemer` package (required for my slides but not for your code).
+
+- If you are having trouble installing/loading any packages, please come to office hour or make an appointment with me or course TA.
+
+---
+
+### Lecture 16 In-class Exercises
+
+.pull-left[
+
+#### **Question 1 (L16) - Session ID: bua345s23**
+
+Review Question from Lecture 15 and HW 7.
+
+If two predictor variables (X variables) in a model have a correlation of 0.85, what do you conclude?
+
+]
+
+.pull-right[
+
+&lt;img src="docs_files/images/beaver.png" width="320" /&gt;
+
+]
+
+
+---
+
+### Animals Data Dictionary - Description of Variables
+
+
+|Variable   |Type         |Description                                                                     |
+|:----------|:------------|:-------------------------------------------------------------------------------|
+|Species    |Nominal      |Name of Species                                                                 |
+|TotalSleep |Quantitative |Total Sleep = sum of slow wave and paradoxical sleep (hrs/day)                  |
+|BodyWt     |Quantitative |Average Body Weight in kilograms                                                |
+|LNBodyWt   |Quantitative |Natural Log of Body Weight                                                      |
+|BrainWt    |Quantitative |Average Brain Weight in grams                                                   |
+|LNBrainWt  |Quantitative |Natural Log of Brain Weight                                                     |
+|LifeSpan   |Quantitative |Maximum Life Span in years                                                      |
+|LNLifeSpan |Quantitative |Natural Log of Life Span                                                        |
+|Gestation  |Quantitative |Gestation Time in days                                                          |
+|Predation  |Ordinal      |Predation Index (1 = least likely to be preyed upon, 5 = most likely)           |
+|Exposure   |Ordinal      |Sleep Exposure Index (1 = least exposed while sleeping, 5 = most exposed        |
+|Danger     |Ordinal      |Overall Danger Index (1 = least danger from other animals, 5 = most most danger |
+
+---
+
+### Reminder of Concerns
+
+-   **LNBodyWt and LNBrainWt (R = 0.95):** These two predictors can not both be in the final model.
+-   **LNBrainWt and LNLifeSpan (R = 0.79):** These two predictors ideally should not both be in the final model.
+-   **Predation (PredF) and Danger (DangrF) (R = 0.95):** These two predictors can not both be in the final model.
+-   **Exposure (ExposF) and Danger (DangrF) (R = 0.78):** These two predictors ideally should not both be in the final model.
+- **NOTE:** Students should know the commands for creating a correlation matrix with rounded values.
+
+.pull-left[
+
+
+```r
+animals &lt;- animals |&gt; filter(!is.na(LifeSpan) &amp; !is.na(Gestation)) # exclude missing values
+animals |&gt; select(TotalSleep, LNBodyWt, LNBrainWt, LNLifeSpan) |&gt; cor() |&gt; round(2) |&gt; kable()
+```
+
+
+
+|           | TotalSleep| LNBodyWt| LNBrainWt| LNLifeSpan|
+|:----------|----------:|--------:|---------:|----------:|
+|TotalSleep |       1.00|    -0.56|     -0.57|      -0.37|
+|LNBodyWt   |      -0.56|     1.00|      0.95|       0.71|
+|LNBrainWt  |      -0.57|     0.95|      1.00|       0.79|
+|LNLifeSpan |      -0.37|     0.71|      0.79|       1.00|
+
+]
+
+.pull-right[
+
+
+```r
+animals |&gt; select(Predation, Exposure, Danger) |&gt; cor() |&gt; round(2) |&gt; kable()
+```
+
+
+
+|          | Predation| Exposure| Danger|
+|:---------|---------:|--------:|------:|
+|Predation |      1.00|     0.66|   0.95|
+|Exposure  |      0.66|     1.00|   0.78|
+|Danger    |      0.95|     0.78|   1.00|
+
+]
+---
+
+### Review of Backward Elimination of Animals Data
+
+-   After examining the data, we developed a full model and did Backward Elimination
+-   We opted to exclude Danger (DangrF) because it was highly correlated with Predation
+-   We opted to exclude LNBrainWt because it highly correlated with LNBodyWt and LNLifeSpan
+
+
+```
+## 
+## 
+##                                 Elimination Summary                                 
+## -----------------------------------------------------------------------------------
+##         Variable                            Adj.                                       
+## Step         Removed          R-Square    R-Square     C(p)        AIC        RMSE     
+## -----------------------------------------------------------------------------------
+##    1    LNLifeSpan              0.8324      0.6649    -7.0000    251.2967    2.6421    
+##    2    LNBodyWt:PredF          0.8156      0.6838    -6.5850    247.9947    2.5663    
+##    3    LNBodyWt:Gestation      0.8109       0.687    -7.9146    247.2228    2.5534    
+##    4    LNLifeSpan:ExposF       0.7774      0.6762    -5.1130    247.2199    2.5972    
+##    5    ExposF                  0.7343      0.6553    -0.9376    247.8943    2.6798    
+## -----------------------------------------------------------------------------------
+```
+
+---
+
+
+### Model Selection Methods
+
+- Recall that in Multiple Linear Regression (MLR) the goal is to choose the simplest most accurate model, i.e. the 'BEST' set of independent variables
+
+- How do we decide which variables should be in our model?
+
+- There are many methods:
+
+- We've discussed Backward Elimination which can also be done manually in any software (not recommended).
+
+- **Backward Elimination** starts with all potential terms (including potential interaction terms) in the model and removes the least significant term for each step.
+
+   - This is referred to as starting with a **full** or **saturated** model.
+
+- **Forward Selection:** By default, this procedure starts with an empty model and adds the most significant term at each step until there are no more useful terms to add.
+
+   -  Forward selection also needs to know what terms are in the **full** model.
+
+- **Stepwise Selection:** By default, this procedure starts with an empty model and then adds or removes a term for each step.
+
+- Common Practice: Try multiple methods to develop preliminary final model and then tweak as needed.
+
+---
+
+### Notes about Model Selection using Multiple Methods
+
+.pull-left[
+
+- These steps are similar to the steps for Backward Elimination.
+
+- Not all steps are ALWAYS required. It depends on how complex the data are.
+
+- In the following example, we only need to do part of Step 1 plus Steps 2, 3, and 6.
+
+   -  For step 1, we only need to examine correlations.
+
+   -  In this case, Step 7 will be apparent.
+
+   -  We can add model estimates to data for future interpretation (Step 8)
+
+
+]
+
+
+.pull-right[
+
+&lt;img src="docs_files/images/owl.png" width="304" /&gt;
+
+]
+
+
+
+
+---
+
+### Steps for Model Selection Using Multiple Methods
+                                    
+**`1.`** Examine Matrix of Scatterplots and histograms and determine if any transformations are needed to linearize relationships between continuous predictors and response variable.
+
+  - Also look at correlation matrix to check if there are pairs of variables to be concerned about.
+
+**`2.`** Create a 'saturated' model with all potential predictor variables and interaction terms (Subjective!).
+
+**`3.`**  Use **Backward Elimination**, **Forward Selection**, and **Stepwise Selection** to find preliminary candidate models. (These are automated procedures!)
+
+  - Carefully examine results to see where these candidate models agree and disagree.
+
+**`4.`** Examine predictors in preliminary candidate models to confirm they are not too highly correlated with each other.
+
+  - If two predictor variables in any model have a correlation of 0.8 or greater, drop one of them.
+
+**`5.`**  Rerun model selection methods, if a candidate model is substantially changed (not always needed).
+
+**`6.`**  Compare model fit statistics from final candidate model from all three methods.
+
+**`7.`**  Decide on final candidate and make final modifications, if needed.
+
+**`8.`**  Interpret final model.
+
+---
+
+### Wine Data - Model Selection Example
+
+.pull-left[
+
+***Can we determine what factors affect wine quality even if we KNOW NOTHING about wine cultivation and chemistry?***
+
+**Maybe!**
+
+- Since we have no prior knowledge, we start with a straightforward full model with all available predictors and no interactions.
+
+  - In practice, a consultant would be working with a wine expert to carefully determine a saturated model that includes all possible interactions.
+
+]
+
+.pull-right[
+
+&lt;img src="docs_files/images/beaver.png" width="320" /&gt;
+
+
+]
+
+---
+
+### Import Wine Data
+
+-   Notice that all variables are numeric (*`&lt;dbl&gt;`* stands for decimal value).
+
+
+```r
+wine &lt;- read_csv("wine.csv", show_col_types = F) |&gt;
+  glimpse()
+```
+
+```
+## Rows: 605
+## Columns: 11
+## $ Wine_Quality          &lt;dbl&gt; 5, 6, 7, 5, 7, 5, 5, 5, 5, 5, 5, 5, 6, 5, 5, 4, …
+## $ Fixed_Acidity         &lt;dbl&gt; 9.3, 9.1, 7.9, 7.2, 11.9, 7.2, 7.4, 9.9, 7.8, 8.…
+## $ Volatile_Acidity      &lt;dbl&gt; 0.48, 0.22, 0.34, 1.00, 0.43, 0.49, 0.67, 0.50, …
+## $ Citric_Acidity        &lt;dbl&gt; 0.29, 0.24, 0.36, 0.00, 0.66, 0.24, 0.12, 0.50, …
+## $ Residual_Sugar        &lt;dbl&gt; 2.1, 2.1, 1.9, 3.0, 3.1, 2.2, 1.6, 13.8, 1.9, 1.…
+## $ Chlorides             &lt;dbl&gt; 0.127, 0.078, 0.065, 0.102, 0.109, 0.070, 0.186,…
+## $ Free_Sulphur_Dioxide  &lt;dbl&gt; 6, 1, 5, 7, 10, 5, 5, 48, 27, 6, 7, 17, 29, 5, 1…
+## $ Total_Sulphur_Dioxide &lt;dbl&gt; 16, 28, 10, 16, 23, 36, 21, 82, 55, 12, 50, 45, …
+## $ Ph                    &lt;dbl&gt; 3.22, 3.41, 3.27, 3.43, 3.15, 3.33, 3.39, 3.16, …
+## $ Sulfate               &lt;dbl&gt; 0.72, 0.87, 0.54, 0.46, 0.85, 0.48, 0.54, 0.75, …
+## $ Alcohol               &lt;dbl&gt; 11.2, 10.3, 11.2, 10.0, 10.4, 9.4, 9.5, 8.8, 11.…
+```
+
+---
+
+### Examine Correlation matrix for Multicollinearity 
+
+
+
+&lt;img src="docs_files/images/wine_corr_mat.jpg" width="789" /&gt;
+
+
+```r
+max(cor_wine[cor_wine &lt; 1])
+min(cor_wine)
+```
+
+```
+## [1] 0.68
+## [1] -0.7
+```
+
+---
+
+
+### Model Selection
+
+- We specify a full model using an easy shortcut:
+
+   - If all variables are included, you can use `.` instead of listing them all.
+
+- The we do three model selection procedures:
+
+   - Backward Elimination (BE)
+   - Forward Selection (FS)
+   - Stepwise Selection (SS)
+
+
+```r
+wine_full &lt;- lm(Wine_Quality ~ ., data = wine)                 # specify full model
+
+wine_BE &lt;- ols_step_backward_p(wine_full, progress=F)          # backward elimination  
+
+wine_FS &lt;- ols_step_forward_p(wine_full, progress=F)           # forward selection
+
+wine_SS &lt;- ols_step_both_p(wine_full, progress=F)              # stepwise selection
+```
+
+---
+
+#### Comparing Model Results
+
+- Look at the LAST step for each method to determine which method results in the best fit.
+
+- Comparison Measures:
+
+  - **Adj. R&lt;sup&gt;2&lt;/sup&gt;:** Higher value indicates better model fit
+
+  - **C(p):** Lower value indicates better model fit (Also referred to as Mallow's C(p)).
+
+  - **AIC:** Lower value indicates better model fit (Akaike Information Criteria).
+
+  - **RMSE:** Lower value indicates better model fit (Root mean Square Error).
+
+- By comparing these measures and accounting for our understanding of these procedures, we can determine that **TWO** of these methods arrived at the same model.
+
+### Lecture 16 In-class Exercises
+
+#### **Question 1 (L15) - Session ID: bua345s23**
+
+Which two model selection methods arrived at the same model for the wine data?
+
+---
+#### Backwards Elimination &amp; Forward Selection
+
+```
+## 
+## 
+##                               Elimination Summary                               
+## -------------------------------------------------------------------------------
+##         Variable                        Adj.                                       
+## Step       Removed        R-Square    R-Square     C(p)        AIC        RMSE     
+## -------------------------------------------------------------------------------
+##    1    Residual_Sugar      0.3318      0.3217    9.1492    1233.2028    0.6639    
+##    2    Fixed_Acidity       0.3315      0.3226    7.3871    1231.4450    0.6635    
+##    3    Citric_Acidity      0.3312      0.3233    5.7006    1229.7639    0.6631    
+## -------------------------------------------------------------------------------
+```
+
+```
+## 
+##                                    Selection Summary                                     
+## ----------------------------------------------------------------------------------------
+##         Variable                               Adj.                                         
+## Step           Entered           R-Square    R-Square      C(p)         AIC        RMSE     
+## ----------------------------------------------------------------------------------------
+##    1    Alcohol                    0.2022      0.2009    108.3814    1324.4468    0.7206    
+##    2    Volatile_Acidity           0.3032      0.3009     20.5402    1244.5203    0.6740    
+##    3    Sulfate                    0.3174      0.3140      9.9221    1234.0711    0.6676    
+##    4    Chlorides                  0.3210      0.3165      8.7252    1232.8759    0.6664    
+##    5    Ph                         0.3256      0.3199      6.7047    1230.8334    0.6648    
+##    6    Total_Sulphur_Dioxide      0.3281      0.3214      6.4128    1230.5168    0.6641    
+##    7    Free_Sulphur_Dioxide       0.3312      0.3233      5.7006    1229.7639    0.6631    
+## ----------------------------------------------------------------------------------------
+```
+
+---
+
+#### Backwards Elimination &amp; Stepwise Selection
+
+```
+## 
+## 
+##                               Elimination Summary                               
+## -------------------------------------------------------------------------------
+##         Variable                        Adj.                                       
+## Step       Removed        R-Square    R-Square     C(p)        AIC        RMSE     
+## -------------------------------------------------------------------------------
+##    1    Residual_Sugar      0.3318      0.3217    9.1492    1233.2028    0.6639    
+##    2    Fixed_Acidity       0.3315      0.3226    7.3871    1231.4450    0.6635    
+##    3    Citric_Acidity      0.3312      0.3233    5.7006    1229.7639    0.6631    
+## -------------------------------------------------------------------------------
+```
+
+```
+## 
+##                                   Stepwise Selection Summary                                    
+## -----------------------------------------------------------------------------------------------
+##                              Added/                   Adj.                                         
+## Step        Variable        Removed     R-Square    R-Square      C(p)         AIC        RMSE     
+## -----------------------------------------------------------------------------------------------
+##    1        Alcohol         addition       0.202       0.201    108.3810    1324.4468    0.7206    
+##    2    Volatile_Acidity    addition       0.303       0.301     20.5400    1244.5203    0.6740    
+##    3        Sulfate         addition       0.317       0.314      9.9220    1234.0711    0.6676    
+##    4       Chlorides        addition       0.321       0.317      8.7250    1232.8759    0.6664    
+##    5           Ph           addition       0.326       0.320      6.7050    1230.8334    0.6648    
+## -----------------------------------------------------------------------------------------------
+```
+
+---
+
+#### Forward Selection &amp; Stepwise Selection 
+
+```
+## 
+##                                    Selection Summary                                     
+## ----------------------------------------------------------------------------------------
+##         Variable                               Adj.                                         
+## Step           Entered           R-Square    R-Square      C(p)         AIC        RMSE     
+## ----------------------------------------------------------------------------------------
+##    1    Alcohol                    0.2022      0.2009    108.3814    1324.4468    0.7206    
+##    2    Volatile_Acidity           0.3032      0.3009     20.5402    1244.5203    0.6740    
+##    3    Sulfate                    0.3174      0.3140      9.9221    1234.0711    0.6676    
+##    4    Chlorides                  0.3210      0.3165      8.7252    1232.8759    0.6664    
+##    5    Ph                         0.3256      0.3199      6.7047    1230.8334    0.6648    
+##    6    Total_Sulphur_Dioxide      0.3281      0.3214      6.4128    1230.5168    0.6641    
+##    7    Free_Sulphur_Dioxide       0.3312      0.3233      5.7006    1229.7639    0.6631    
+## ----------------------------------------------------------------------------------------
+```
+
+```
+## 
+##                                   Stepwise Selection Summary                                    
+## -----------------------------------------------------------------------------------------------
+##                              Added/                   Adj.                                         
+## Step        Variable        Removed     R-Square    R-Square      C(p)         AIC        RMSE     
+## -----------------------------------------------------------------------------------------------
+##    1        Alcohol         addition       0.202       0.201    108.3810    1324.4468    0.7206    
+##    2    Volatile_Acidity    addition       0.303       0.301     20.5400    1244.5203    0.6740    
+##    3        Sulfate         addition       0.317       0.314      9.9220    1234.0711    0.6676    
+##    4       Chlorides        addition       0.321       0.317      8.7250    1232.8759    0.6664    
+##    5           Ph           addition       0.326       0.320      6.7050    1230.8334    0.6648    
+## -----------------------------------------------------------------------------------------------
+```
+
+---
+
+### Model Validation
+
+
+```r
+# create final model dataset save model
+wine_model_data &lt;- wine |&gt; 
+  select(!c("Residual_Sugar","Fixed_Acidity","Citric_Acidity"))
+
+# create save final model
+wine_model_final &lt;- ols_regress(Wine_Quality ~ ., data=wine_model_data)
+wine_model &lt;- wine_model_final$model
+
+# add final model estimates and residuals to dataset
+wine_model_data &lt;- wine_model_data |&gt;   
+  mutate(Est_Wine_Quality = lm(wine_model) |&gt; predict(wine_model_data) |&gt; round(2))
+
+# calculate correlation between observed and estimated wine quality
+wine_model_data |&gt; select(Wine_Quality, Est_Wine_Quality) |&gt; cor() |&gt; round(2)
+```
+
+```
+##                  Wine_Quality Est_Wine_Quality
+## Wine_Quality             1.00             0.58
+## Est_Wine_Quality         0.58             1.00
+```
+
+
+
+---
+
+### Model Validation Plot
+
+&lt;img src="docs_files/figure-html/display of wine model validation scatterplot-1.png" width="504" style="display: block; margin: auto;" /&gt;
+
+---
+
+### Best Subsets
+
+- Another model selection method is 'Best Subsets'
+   
+   - Output shows 'Best' one variable model, 'Best' two variable model, 'Best' three variable model, etc.
+   
+- Each 'Best' model is determined by multiple **Fit Statistics**.
+
+- This method then examines which of these candidates is the overall best by comparing their fit statistics.
+
+- If we are fortunate, the optimal choice from `Best Subsets` matches a model above.
+
+   -  In this case (and HW 8) we are fortunate.
+
+- NOTE: `ols_step_best_subset` command is **VERY** slow. You do not need to rerun it. Output is provided.
+
+---
+
+### Best Subsets PLots (Only Page 1 Plots Required for BUA 345)
+
+
+```r
+wine_BEST &lt;- ols_step_best_subset(wine_full)
+plot(wine_BEST)
+```
+
+&lt;img src="docs_files/figure-html/best subsets model selection-1.png" width="504" /&gt;&lt;img src="docs_files/figure-html/best subsets model selection-2.png" width="504" /&gt;
+
+---
+
+### Reading Best Subsets Output
+
+#### Tabular Output
+
+- Bottom table shows which model performs best, based on all of the fit statistics.
+
+  - For example, if model 3 (Three variable model) was best, it would have the HIGHEST Adjusted R&lt;sup&gt;2&lt;/sup&gt;, Lowest C(p), and Lowest AIC.
+
+    - We can see from bottom table that **Model 3 is not the best**.
+  
+  - **Model 7 IS the best** because it does have the HIGHEST Adjusted R&lt;sup&gt;2&lt;/sup&gt;, Lowest C(p), and Lowest AIC.
+
+- Top table lists the variables in each of the 'Best' models.
+
+
+---
+
+### Wine Best Subset Output
+
+&lt;img src="docs_files/images/HW8_Wine_Model_BEST.png" width="1280" /&gt;
+
+---
+
+### Preview of HW 8 - Part 1
+
+.pull-left[
+
+- Compare the optimal best subset model (Model 7) to the model found by both Backward Elimination and Forward Selection.
+
+- The goal is to determine to what extent they agree.
+
+  - Spoiler: They are in complete agreement which indicates that we have consensus on the model for these data.
+
+
+]
+
+.pull-right[
+
+&lt;img src="docs_files/images/owl.png" width="304" /&gt;
+
+]
+
+---
+
+### Reminder of Upcoming Dates
+
+.pull-left[
+
+- Today's Lecture (3/21) is the third and final lecture on model and variable selection.
+
+- **HW 7 was due on Monday, 3/20**. 
+
+   - Grace Period is extended until Wednesday 3/22 at midnight, because of Spring Break.
+   
+- **HW 8 is now posted and is due Monday, 3/27**
+
+  - Part 1 pertains to Lectures 15 and 16 (today's lecture)
+    
+  - Part 2 pertains to Lecture 17
+  
+- **Quiz 2 is Thursday, March 30th**
+
+  - Practice Questions will be posted by Friday
+
+]
+
+
+.pull-right[
+
+&lt;img src="docs_files/images/owl.png" width="304" /&gt;
+
+]
+
+---
+
+background-image: url("docs_files/images/tired_panda_faded.png")
+background-size: cover
+
+.pull-left[
+
+### **Key Points - Model Selection**
+
+.bg-azure.b--dark_cyan.ba.bw2.br3.shadow-5.ph2[
+
+-  Regression modeling can be overwhelming because of all of the possible options.
+
+   - Automating part of the variable selection process is helpful.
+
+   - Trying different methods and comparing results is strongly recommended.
+
+   - Results from Automated processes are preliminary models that can (and should) be tinkered with.
+
+   - Once we have a final model we can add regression estimates and residuals to the dataset.
+    
+   - Methods Covered: Backwards Elimination, Forward Selection, Stepwise Selection, Best Subsets 
+     
+      - Compare results multiple methods 
+
+
+]
+
+]
+
+.pull-right[
+
+.bg-azure.b--dark_cyan.ba.bw2.br3.shadow-5.ph3[
+You may submit an 'Engagement Question' about each lecture until midnight on the day of the lecture. **A minimum of four submissions are required during the semester.**
+]
+
+]
+
+
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"slideNumberFormat": "%current%/%total%",
+"highlightStyle": "tomorrow-night-bright",
+"highlightLines": true,
+"ratio": "16:9",
+"countIncrementalSlides": true,
+"keep_md": true
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// add `data-at-shortcutkeys` attribute to <body> to resolve conflicts with JAWS
+// screen reader (see PR #262)
+(function(d) {
+  let res = {};
+  d.querySelectorAll('.remark-help-content table tr').forEach(tr => {
+    const t = tr.querySelector('td:nth-child(2)').innerText;
+    tr.querySelectorAll('td:first-child .key').forEach(key => {
+      const k = key.innerText;
+      if (/^[a-z]$/.test(k)) res[k] = t;  // must be a single letter (key)
+    });
+  });
+  d.body.setAttribute('data-at-shortcutkeys', JSON.stringify(res));
+})(document);
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
